@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: spark
+  name: pyspark-deployment
+  labels:
+    app: pyspark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pyspark
+  template:
+    metadata:
+      labels:
+        app: pyspark
+    spec:
+      serviceAccountName: spark
+      containers:
+      - name: pyspark
+        image: jupyter/pyspark-notebook:latest
+        ports:
+          - containerPort: 8888
+        volumeMounts:
+          - mountPath: /home/jovyan/work
+            name: pyspark-pv
+        workingDir: /home/jovyan
+        resources:
+          limits:
+            memory: 2Gi
+      volumes:
+        - name: pyspark-pv
+          persistentVolumeClaim:
+            claimName: pyspark-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: spark
+  name: pyspark-deployment
+spec:
+  selector:
+    app: pyspark
+  ports:
+    - protocol: TCP
+      port: 29413
+  clusterIP: None
